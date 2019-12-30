@@ -129,15 +129,6 @@
  struct ip_auth_hdr {
 --- a/include/uapi/linux/ipv6.h
 +++ b/include/uapi/linux/ipv6.h
-@@ -104,7 +104,7 @@ struct ipv6_destopt_hao {
- 	__u8			type;
- 	__u8			length;
- 	struct in6_addr		addr;
--} __attribute__((packed));
-+} __attribute__((packed, aligned(2)));
- 
- /*
-  *	IPv6 fixed header
 @@ -131,7 +131,7 @@ struct ipv6hdr {
  
  	struct	in6_addr	saddr;
@@ -223,7 +214,7 @@
  #include <linux/uaccess.h>
  #include <linux/ipv6.h>
  #include <linux/icmpv6.h>
-@@ -820,10 +821,10 @@ static void tcp_v6_send_response(const s
+@@ -819,10 +820,10 @@ static void tcp_v6_send_response(const s
  	topt = (__be32 *)(t1 + 1);
  
  	if (tsecr) {

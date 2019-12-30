@@ -2,6 +2,17 @@
 # MT76x8 Profiles
 #
 
+DEVICE_VARS += SERCOMM_KERNEL_OFFSET SERCOMM_HWID SERCOMM_HWVER SERCOMM_SWVER
+
+define Build/mksercommfw
+	$(STAGING_DIR_HOST)/bin/mksercommfw \
+		$@ \
+		$(SERCOMM_KERNEL_OFFSET) \
+		$(SERCOMM_HWID) \
+		$(SERCOMM_HWVER) \
+		$(SERCOMM_SWVER)
+endef
+
 define Device/tplink
   TPLINK_FLASHLAYOUT :=
   TPLINK_HWID :=
@@ -27,19 +38,6 @@ define Device/alfa-network_awusfree1
 endef
 TARGET_DEVICES += alfa-network_awusfree1
 
-define Device/cudy_wr1000
-  DTS := WR1000
-  IMAGE_SIZE := $(ralink_default_fw_size_8M)
-  IMAGES += factory.bin
-  IMAGE/factory.bin := \
-        $$(sysupgrade_bin) | check-size $$$$(IMAGE_SIZE) | jcg-header 92.122
-  JCG_MAXSIZE := 7872k
-  DEVICE_TITLE := Cudy WR1000
-  DEVICE_PACKAGES := kmod-mt76x2
-  SUPPORTED_DEVICES += wr1000
-endef
-TARGET_DEVICES += cudy_wr1000
-
 define Device/tama_w06
   DTS := W06
   IMAGE_SIZE := 15040k
@@ -63,35 +61,12 @@ define Device/gl-mt300n-v2
 endef
 TARGET_DEVICES += gl-mt300n-v2
 
-define Device/glinet_vixmini
-  DTS := VIXMINI
-  IMAGE_SIZE := 7872k
-  DEVICE_TITLE := GL.iNet VIXMINI
-  SUPPORTED_DEVICES += vixmini
-endef
-TARGET_DEVICES += glinet_vixmini
-
-define Device/hc5611
-  DTS := HC5611
-  IMAGE_SIZE := $(ralink_default_fw_size_16M)
-  DEVICE_TITLE := HiWiFi HC5611
-  DEVICE_PACKAGES := kmod-usb2 kmod-usb-ohci kmod-usb-ledtrig-usbport
-endef
-TARGET_DEVICES += hc5611
-
 define Device/hc5661a
   DTS := HC5661A
   IMAGE_SIZE := $(ralink_default_fw_size_16M)
   DEVICE_TITLE := HiWiFi HC5661A
 endef
 TARGET_DEVICES += hc5661a
-
-define Device/hilink_hlk-7628n
-  DTS := HLK-7628N
-  IMAGE_SIZE := $(ralink_default_fw_size_32M)
-  DEVICE_TITLE := HILINK HLK7628N
-endef
-TARGET_DEVICES += hilink_hlk-7628n
 
 define Device/hiwifi_hc5861b
   DTS := HC5861B
@@ -139,16 +114,16 @@ define Device/netgear_r6120
   DTS := R6120
   BLOCKSIZE := 64k
   IMAGE_SIZE := $(ralink_default_fw_size_16M)
-  DEVICE_TITLE := Netgear R6120
+  DEVICE_TITLE := Netgear AC1200 R6120
   DEVICE_PACKAGES := kmod-mt76x2 kmod-usb2 kmod-usb-ohci
+  SERCOMM_KERNEL_OFFSET := 0x90000
   SERCOMM_HWID := CGQ
   SERCOMM_HWVER := A001
   SERCOMM_SWVER := 0x0040
   IMAGES += factory.img
   IMAGE/default := append-kernel | pad-to $$$$(BLOCKSIZE)| append-rootfs | pad-rootfs
   IMAGE/sysupgrade.bin := $$(IMAGE/default) | append-metadata | check-size $$$$(IMAGE_SIZE)
-  IMAGE/factory.img := pad-extra 576k | $$(IMAGE/default) | pad-to $$$$(BLOCKSIZE) | \
-	sercom-footer | pad-to 128 | zip R6120.bin | sercom-seal
+  IMAGE/factory.img := $$(IMAGE/default) | mksercommfw
 endef
 TARGET_DEVICES += netgear_r6120
 
@@ -176,13 +151,6 @@ define Device/pbr-d1
 endef
 TARGET_DEVICES += pbr-d1
 
-define Device/rakwireless_rak633
-  DTS := RAK633
-  DEVICE_TITLE := Rakwireless RAK633
-  DEVICE_PACKAGES := kmod-usb2 kmod-usb-ohci
-endef
-TARGET_DEVICES += rakwireless_rak633
-
 define Device/skylab_skw92a
   DTS := SKW92A
   IMAGE_SIZE := 16064k
@@ -190,14 +158,6 @@ define Device/skylab_skw92a
   DEVICE_PACKAGES := kmod-usb2 kmod-usb-ohci
 endef
 TARGET_DEVICES += skylab_skw92a
-
-define Device/totolink_lr1200
-  DTS := TOTOLINK-LR1200
-  IMAGE_SIZE := 7872k
-  DEVICE_TITLE := TOTOLINK LR1200
-  DEVICE_PACKAGES := kmod-mt76x2 kmod-usb2 uqmi
-endef
-TARGET_DEVICES += totolink_lr1200
 
 define Device/tplink_tl-wa801nd-v5
   $(Device/tplink)
@@ -211,19 +171,6 @@ define Device/tplink_tl-wa801nd-v5
   TPLINK_HVERSION := 3
 endef
 TARGET_DEVICES += tplink_tl-wa801nd-v5
-
-define Device/tplink_tl-wr802n-v4
-  $(Device/tplink)
-  DTS := TL-WR802NV4
-  IMAGE_SIZE := 7808k
-  DEVICE_TITLE := TP-Link TL-WR802N v4
-  TPLINK_FLASHLAYOUT := 8Mmtk
-  TPLINK_HWID := 0x08020004
-  TPLINK_HWREV := 0x1
-  TPLINK_HWREVADD := 0x4
-  TPLINK_HVERSION := 3
-endef
-TARGET_DEVICES += tplink_tl-wr802n-v4
 
 define Device/tl-wr840n-v4
   $(Device/tplink)
@@ -251,7 +198,6 @@ define Device/tl-wr840n-v5
   KERNEL_INITRAMFS := $(KERNEL_DTB) | tplink-v2-header -e
   IMAGE/sysupgrade.bin := tplink-v2-image -s -e | append-metadata | \
 	check-size $$$$(IMAGE_SIZE)
-  DEFAULT := n
 endef
 TARGET_DEVICES += tl-wr840n-v5
 
@@ -295,21 +241,6 @@ define Device/tplink_c50-v3
   DEVICE_PACKAGES := kmod-mt76x2
 endef
 TARGET_DEVICES += tplink_c50-v3
-
-define Device/tplink_c50-v4
-  $(Device/tplink)
-  DTS := ArcherC50V4
-  IMAGE_SIZE := 7616k
-  DEVICE_TITLE := TP-Link ArcherC50 v4
-  TPLINK_FLASHLAYOUT := 8MSUmtk
-  TPLINK_HWID := 0x001D589B
-  TPLINK_HWREV := 0x93
-  TPLINK_HWREVADD := 0x2
-  TPLINK_HVERSION := 3
-  DEVICE_PACKAGES := kmod-mt76x2
-  IMAGES := sysupgrade.bin
-endef
-TARGET_DEVICES += tplink_c50-v4
 
 define Device/tplink_tl-mr3020-v3
   $(Device/tplink)
@@ -401,15 +332,6 @@ define Device/wavlink_wl-wn570ha1
 endef
 TARGET_DEVICES += wavlink_wl-wn570ha1
 
-define Device/wavlink_wl-wn575a3
-  DTS := WL-WN575A3
-  IMAGE_SIZE := $(ralink_default_fw_size_8M)
-  DEVICE_TITLE := Wavlink WL-WN575A3
-  DEVICE_PACKAGES := kmod-mt76x2
-  SUPPORTED_DEVICES += wl-wn575a3
-endef
-TARGET_DEVICES += wavlink_wl-wn575a3
-
 define Device/wcr-1166ds
   DTS := WCR-1166DS
   BUFFALO_TAG_PLATFORM := MTK
@@ -426,6 +348,14 @@ define Device/wcr-1166ds
   DEVICE_PACKAGES := kmod-mt76x2
 endef
 TARGET_DEVICES += wcr-1166ds
+
+define Device/wl-wn575a3
+  DTS := WL-WN575A3
+  IMAGE_SIZE := $(ralink_default_fw_size_8M)
+  DEVICE_TITLE := Wavlink WL-WN575A3
+  DEVICE_PACKAGES := kmod-mt76x2
+endef
+TARGET_DEVICES += wl-wn575a3
 
 define Device/widora_neo-16m
   DTS := WIDORA-NEO-16M
@@ -444,13 +374,6 @@ define Device/widora_neo-32m
 endef
 TARGET_DEVICES += widora_neo-32m
 
-define Device/wiznet_wizfi630s
-  DTS := WIZFI630S
-  IMAGE_SIZE := $(ralink_default_fw_size_32M)
-  DEVICE_TITLE := WIZnet WizFi630S
-endef
-TARGET_DEVICES += wiznet_wizfi630s
-
 define Device/wrtnode2p
   DTS := WRTNODE2P
   IMAGE_SIZE := $(ralink_default_fw_size_16M)
@@ -466,14 +389,6 @@ define Device/wrtnode2r
   DEVICE_PACKAGES := kmod-usb2 kmod-usb-ohci
 endef
 TARGET_DEVICES += wrtnode2r
-
-define Device/xiaomi_mir4a-100m
-  DTS := XIAOMI-MIR4A-100M
-  IMAGE_SIZE := 14976k
-  DEVICE_TITLE := Xiaomi Mi Router 4A (100M Edition)
-  DEVICE_PACKAGES := kmod-mt76x2
-endef
-TARGET_DEVICES += xiaomi_mir4a-100m
 
 define Device/zbtlink_zbt-we1226
   DTS := ZBT-WE1226

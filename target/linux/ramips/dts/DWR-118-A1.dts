@@ -16,7 +16,7 @@
 		led-upgrade = &led_internet;
 	};
 
-	keys {
+	gpio-keys-polled {
 		compatible = "gpio-keys-polled";
 		poll-interval = <20>;
 
@@ -33,7 +33,7 @@
 		};
 	};
 
-	leds {
+	gpio-leds {
 		compatible = "gpio-leds";
 
 		wan {
@@ -149,11 +149,6 @@
 		mtd-mac-address = <&config 0xe496>;
 		mtd-mac-address-increment = <(2)>;
 		mediatek,mtd-eeprom = <&config 0xe083>;
-
-		led {
-			led-sources = <0>;
-			led-active-low;
-		};
 	};
 };
 
